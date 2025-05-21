@@ -27,3 +27,7 @@ bash speedtest.sh
 bash speedtest.sh -r jp
 ```
 ## 需要修改地方
+- 添加 TG推送信息
+- 群组或个人ID
+- 机器人toke
+![image.png](https://img.lwxpz.me/file/1747824579023_image.png)
