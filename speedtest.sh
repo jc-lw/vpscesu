@@ -122,7 +122,7 @@ run_test() {
     fi
 
     if [ $? -ne 0 ]; then
-        MSG="[$TIMESTAMP] ❌ Speedtest 失败。"
+        MSG="[$TIMESTAMP] ❌ Speedtest 失败, IP: $PUBLIC_IP $COUNTRY。"
         echo "$MSG" | tee -a "$LOG_FILE"
         send_telegram "$MSG"
         return
