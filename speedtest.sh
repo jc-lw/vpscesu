@@ -135,7 +135,7 @@ run_test() {
     SERVER_NAME=$(echo "$RESULT" | jq -r '.server.name')
     LOCATION=$(echo "$RESULT" | jq -r '.server.location')
 
-    MSG="*📡 VPS测速报告*  
+    MSG="*📡 VPS测速报告$COUNTRY *  
 时间: $TIMESTAMP  
 IP: \`$PUBLIC_IP\`  
 地区: $CITY, $REGION, $COUNTRY  
