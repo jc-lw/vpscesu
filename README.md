@@ -3,6 +3,8 @@
 ## 效果展示，默认调用就近测速点
 
 ![image.png](https://img.lwxpz.me/file/1747821283307_image.png)
+# 麻烦点个免费的 Star
+![image.png](https://img.lwxpz.me/file/1747839668065_image.png)
 
 ## 下载脚本命令为
 
