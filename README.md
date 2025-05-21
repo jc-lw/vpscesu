@@ -1,6 +1,7 @@
 # VPS 自动测速 + 识别 + Telegram 推送脚本
 
 ## 效果展示，默认调用就近测速点
+### 注意你的流量！！！
 
 ![image.png](https://img.lwxpz.me/file/1747821283307_image.png)
 # 麻烦点个免费的 Star
