@@ -900,7 +900,7 @@ guide_godaddy() {
 echo "========================================="
 echo "# Universal embedded DDNS Shell Script #"
 echo "# https://$versionUA"
-echo "# https://blog.03k.org/post/ue-ddns.html"
+echo "# https://github.com/jc-lw/vpscesu"
 echo "========================================="
 dnsProvider="cloudflare,dnspod,godaddy"
 countProvider=$(echo "$dnsProvider" | grep -Eo "[^,]+" | grep -c "")
