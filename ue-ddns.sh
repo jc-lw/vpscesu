@@ -523,7 +523,7 @@ menu_subdomain() {
     i=0
     while [ "$i" -ne "$ddns_subdomain_count" ]; do
         i=$((i + 1))
-        echo "[""$i""]" "$(echo "$ddns_subdomain_list_name" | grep -Eo '[^"]+' | sed -n "$i"p)" "$ddns_IPVType" "$(echo "$ddns_subdomain_list_value" | grep -Eo '[^ ]+' | sed -n "$i"p)"
+        echo "[""$i""]" "$(echo "$ddns_subdomain_list_name" | grep -Eo '[^ ]+' | sed -n "$i"p)" "$ddns_IPVType" "$(echo "$ddns_subdomain_list_value" | grep -Eo '[^ ]+' | sed -n "$i"p)"
     done
     echo "Select your IPV""$ddns_IPV"" subdomain name[0]:"
     read ddns_record_domain
@@ -550,7 +550,7 @@ menu_subdomain() {
     else
         ddns_record_domain_index=$ddns_record_domain
         ddns_not_add_sub="1"
-        ddns_record_domain="$(echo "$ddns_subdomain_list_name" | grep -Eo '[^"]+' | sed -n "$ddns_record_domain"p)"
+        ddns_record_domain="$(echo "$ddns_subdomain_list_name" | grep -Eo '[^ ]+' | sed -n "$ddns_record_domain"p)"
     fi
 }
 
@@ -643,7 +643,7 @@ ddns_update_cloudflare() {
 #func-ddns_update_cloudflare
 
 addsub_cloudflare() {
-    postData="{\"type\":\"${ddns_IPVType}\",\"name\":\"""$ddns_newsubdomain"".""$ddns_main_domain""\",\"content\":\"""$new_initIP""\",\"ttl\":60,\"proxied\":false}"
+    postData="{\"type\":\"${ddns_IPVType}\",\"name\":\"""$ddns_newsubdomain"".""$ddns_main_domain""\",\"content\":\"""$new_initIP""\",\"ttl\":60,\"proxied\":""$cloudflare_cdn""}"
     cloudflare_record_id=$(fetch_cloudflare "$cloudflare_zoneid"/dns_records | grep -Eo '"id":"[0-9a-z]{32}' | grep -Eo "[0-9a-z]{32}")
     postData=""
     if [ -z "$cloudflare_record_id" ]; then
@@ -670,7 +670,7 @@ guide_cloudflare() {
     cloudflare_record_list1=$(echo "$cloudflare_record_list_raw" | grep -Eo '"id":"[0-9a-z]{32}","name":"[^"]+","type":"'"$ddns_IPVType"'","content":"[^"]+')
     cloudflare_record_list=$(echo "$cloudflare_record_list0" " " "$cloudflare_record_list1" | grep name | sort -u)
     cloudflare_record_list_id=$(echo "$cloudflare_record_list" | grep -Eo '"id":"[a-z0-9]{32}' | grep -Eo '[a-z0-9]{32}')
-    ddns_subdomain_list_name=$(echo "$cloudflare_record_list" | grep -Eo '"name":"[^"]+' | sed 's/"name":"//g' | grep -Eo '[^"]+')
+    ddns_subdomain_list_name=$(echo "$cloudflare_record_list" | grep -Eo '"name":"[^"]+' | sed 's/"name":"//g' | grep -Eo '[^ ]+')
     ddns_subdomain_list_value=$(echo "$cloudflare_record_list" | grep -Eo '"content":"[^"]+' | sed 's/"content":"//g')
     menu_subdomain
     if [ "$ddns_not_add_sub" = "1" ]; then
@@ -684,14 +684,32 @@ guide_cloudflare() {
     echo "[1]Disable"
     echo "[2]Enable"
     echo "Your choice [1]:"
-    read cloudflare_cdn
-    if [ "$cloudflare_cdn" = "2" ]; then
+    read cloudflare_cdn_choice
+    if [ "$cloudflare_cdn_choice" = "2" ]; then
         cloudflare_cdn="true"
     else
         cloudflare_cdn="false"
     fi
+    # Fix: Check current proxied status and update if necessary
+    current_record=$(fetch_cloudflare "$cloudflare_zoneid"/dns_records/"$cloudflare_record_id")
+    current_proxied=$(echo "$current_record" | grep -Eo '"proxied":(true|false)' | grep -Eo '(true|false)')
+    if [ "$current_proxied" != "$cloudflare_cdn" ]; then
+        echo "Current proxied is $current_proxied, but you chose $cloudflare_cdn. Fixing now..."
+        postMethod="PATCH"  # Use PATCH to only update proxied
+        postData="{\"proxied\":""$cloudflare_cdn""}"
+        fix_result=$(fetch_cloudflare "$cloudflare_zoneid"/dns_records/"$cloudflare_record_id")
+        postData=""
+        postMethod=""
+        if echo "$fix_result" | grep -q 'success":true'; then
+            echo "Proxied mode fixed and enabled/disabled successfully."
+        else
+            echo "Failed to fix proxied mode: $(echo "$fix_result" | grep -Eo "errors[^]]+" )"
+        fi
+    else
+        echo "Proxied mode already matches your choice ($cloudflare_cdn)."
+    fi
     showDEV "$ddns_IPV"
-    gen_ddns_script init "$ddns_record_domain"
+    gen_ddns_script init "$ddns_record_domain"".""$ddns_main_domain"
     echo "cloudflare_API_Token=\"""$cloudflare_API_Token""\"" >>"$ddns_script_filename"
     echo "cloudflare_zoneid=\"""$cloudflare_zoneid""\"" >>"$ddns_script_filename"
     echo "cloudflare_record_id=\"""$cloudflare_record_id""\"" >>"$ddns_script_filename"
@@ -888,7 +906,7 @@ guide_godaddy() {
     menu_domain
     # Select sub domain
     godaddy_record_list=$(fetch_godaddy "$ddns_main_domain"/records/"$ddns_IPVType")
-    ddns_subdomain_list_name=$(echo "$godaddy_record_list" | grep -Eo '"name":"[^"]+' | sed 's/"name":"//g' | grep -Eo '[^"]+')
+    ddns_subdomain_list_name=$(echo "$godaddy_record_list" | grep -Eo '"name":"[^"]+' | sed 's/"name":"//g' | grep -Eo '[^ ]+')
     ddns_subdomain_list_value=$(echo "$godaddy_record_list" | grep -Eo '"data":"[^"]+' | sed 's/"data":"//g')
     menu_subdomain
     showDEV "$ddns_IPV"
@@ -929,3 +947,34 @@ else
 fi
 ddns_provider=$testguide
 guide_"$ddns_provider"
+
+# Add crontab deployment function (from second code, optimized to every 5 min)
+deploy_crontab() {
+    if [ "$(id -u)" != "0" ]; then
+        echo "请使用root权限运行以部署crontab"
+        exit 1
+    fi
+
+    SCRIPT_PATH=$(readlink -f "$ddns_script_filename")
+    
+    CRON_CMD="*/5 * * * * $SCRIPT_PATH >/dev/null 2>&1"
+    
+    (crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH"; echo "$CRON_CMD") | crontab -
+
+    echo "Crontab部署完成!"
+    echo "DDNS更新脚本将每5分钟运行一次"
+    echo "您可以使用 crontab -l 命令查看crontab条目"
+}
+
+# Add deployment option after script generation
+if [ -f "$ddns_script_filename" ]; then
+    echo "是否要部署自动更新(需要root权限)?"
+    echo "[1] 否"
+    echo "[2] 是,部署crontab(每5分钟运行)"
+    echo "您的选择 [1]:"
+    read deploy_choice
+    
+    if [ "$deploy_choice" = "2" ]; then
+        deploy_crontab
+    fi
+fi
