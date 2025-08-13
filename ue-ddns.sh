@@ -1,12 +1,12 @@
 #!/bin/sh
 # Universal embedded DDNS Shell Script
-# Github:https://github.com/kkkgo/UE-DDNS
+# Github: https://github.com/kkkgo/UE-DDNS
 # Blog: https://blog.03k.org/post/ue-ddns.html
-#func-Universal
-# [!]Be careful not to change any "#" line in the script.
+# func-Universal
+# [!] Be careful not to change any "#" line in the script.
 
 #-DDNSINIT-
-#Customizable option area
+# Customizable option area
 
 # Customize the network proxy that connects to the DNS provider API
 # example1: PROXY="http://192.168.1.100:7890"
@@ -36,12 +36,12 @@ ddns_ntfy_url=""
 # ddns_bark_url="https://api.day.app/yourkey"
 ddns_bark_url=""
 
-# sct is a message push platform(wechat).
+# sct is a message push platform (wechat).
 # https://sct.ftqq.com/
 # ddns_sct_url="https://sctapi.ftqq.com/yourkey.send"
 ddns_sct_url=""
 
-# pushplus is a message push platform(wechat).
+# pushplus is a message push platform (wechat).
 # https://www.pushplus.plus/
 # ddns_pushplus_url="http://www.pushplus.plus/send?token=yourkey"
 ddns_pushplus_url=""
@@ -51,7 +51,7 @@ ddns_pushplus_url=""
 # ddns_dingtalk_url="https://oapi.dingtalk.com/robot/send?access_token=yourtoken"
 ddns_dingtalk_url=""
 
-#Customizable option end
+# Customizable option end
 
 versionUA="github.com/kkkgo/UE-DDNS"
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/bin:/opt/sbin:$PATH"
@@ -369,25 +369,25 @@ check_push() {
 
 push_result() {
     ddns_newIP=$(echo "$ddns_newIP" | sed 's/ /_/g' | sed 's/{//g' | sed 's/}//g' | sed 's/"//g')
-    #nfty
+    # ntfy
     if echo "$ddns_ntfy_url" | grep -Eoq "http"; then
         postData="$ddns_fulldomain"":""$ddns_newIP"
         check_push "Ntfy" "$($(genfetchCMD "$ddns_ntfy_url" useProxy))" "message"
         postData=""
     fi
-    #bark
+    # bark
     if echo "$ddns_bark_url" | grep -Eoq "http"; then
         check_push "Bark" "$($(genfetchCMD "$ddns_bark_url"/"$ddns_fulldomain"/"$ddns_newIP" useProxy))" "success"
     fi
-    #sct
+    # sct
     if echo "$ddns_sct_url" | grep -Eoq "http"; then
         check_push "Sct" "$($(genfetchCMD "$ddns_sct_url""?title=""$ddns_newIP""-""$ddns_fulldomain""&desp=""$filename"":""$ddns_newIP" useProxy))" "SUCCESS"
     fi
-    #pushplus
+    # pushplus
     if echo "$ddns_pushplus_url" | grep -Eoq "http"; then
         check_push "Pushplus" "$($(genfetchCMD "$ddns_pushplus_url""&title=""$ddns_newIP""-""$ddns_fulldomain""&content=""$filename"":""$ddns_newIP" useProxy))" "200"
     fi
-    #dingtalk
+    # dingtalk
     if echo "$ddns_dingtalk_url" | grep -Eoq "http"; then
         nowtime=$(date +%s 2>&1)
         postData="{\"msgtype\":\"markdown\",\"markdown\":{\"title\":\"IP-change-$nowtime-ipIpiP\",\"text\":\"$filename\n>$ddns_newIP\"}}"
@@ -409,10 +409,10 @@ gen_ddns_script() {
             ddns_script_filename="$ddns_script_filename""_""$DEV"".sh"
             testhotplug=$(ls /etc/hotplug.d/iface 2>&1)
             if [ "$?" = "0" ]; then
-                echo "Detected hotplug support, generate script in /etc/hotplug.d/iface ?"
-                echo "[1] No."
-                echo "[2] Move to /etc/hotplug.d/iface"
-                echo "Your choice [1]:"
+                echo "检测到 hotplug 支持，是否生成脚本到 /etc/hotplug.d/iface？"
+                echo "[1] 否"
+                echo "[2] 移动到 /etc/hotplug.d/iface"
+                echo "你的选择 [1]:"
                 read hotplug
                 if [ "$hotplug" = "2" ]; then
                     ddns_script_filename="/etc/hotplug.d/iface/""$ddns_script_filename"
@@ -471,7 +471,7 @@ gen_ddns_script() {
         export_func "push_result" >>"$ddns_script_filename"
         echo "push_result" >>"$ddns_script_filename"
     fi
-    echo "DDNS script generation completed!"
+    echo "DDNS 脚本生成完成！"
     if [ "$hotplug" = "2" ]; then
         echo "$ddns_script_filename"":"
     else
@@ -479,6 +479,24 @@ gen_ddns_script() {
     fi
     chmod +x "$ddns_script_filename"
     ls -lh "$ddns_script_filename"
+
+    # 添加 crontab 配置选项
+    if [ "$ddns_IPmode" = "1" ]; then
+        echo "是否将脚本设置为每分钟运行一次？"
+        echo "[1] 否"
+        echo "[2] 是"
+        echo "你的选择 [1]:"
+        read cron_choice
+        if [ "$cron_choice" = "2" ]; then
+            cron_job="* * * * * $ddns_script_filename >/dev/null 2>&1"
+            (crontab -l 2>/dev/null; echo "$cron_job") | crontab -
+            if [ $? -eq 0 ]; then
+                echo "已成功添加 crontab 任务：$cron_job"
+            else
+                echo "添加 crontab 任务失败，请手动检查 crontab 配置。"
+            fi
+        fi
+    fi
 }
 
 check_method() {
@@ -486,13 +504,13 @@ check_method() {
 }
 
 api_help() {
-    echo "[help] ""$1"
+    echo "[帮助] ""$1"
 }
 
 menu_domain() {
     menu_count=$(echo "$ddns_main_domain_list" | grep -Eo "$DOMAINREX" | grep -c "")
     if [ "$menu_count" = "0" ]; then
-        echo "No domain name found for your account!"
+        echo "未找到您的账户下的域名！"
         exit
     fi
     if [ "$menu_count" != "1" ]; then
@@ -501,7 +519,7 @@ menu_domain() {
             i=$((i + 1))
             echo "[""$i""]" "$(echo "$ddns_main_domain_list" | grep -Eo "$DOMAINREX" | sed -n "$i"p)"
         done
-        echo "Select your domain name[1]:"
+        echo "选择您的域名[1]:"
         read ddns_main_domain
     fi
     if [ -z "$ddns_main_domain" ]; then
@@ -510,35 +528,35 @@ menu_domain() {
     ddns_main_domain_index=$ddns_main_domain
     ddns_main_domain=$(echo "$ddns_main_domain_list" | grep -Eo "$DOMAINREX" | sed -n "$ddns_main_domain"p)
     if [ -z "$ddns_main_domain" ]; then
-        echo "Error domain:ddns_main_domain"
+        echo "错误域名:ddns_main_domain"
         exit
     fi
-    echo "Domain: ""$ddns_main_domain"
+    echo "域名: ""$ddns_main_domain"
 }
 
 menu_subdomain() {
-    echo "IPV""$ddns_IPV"" sub domain list:"
-    echo "[0] Add a new subdomain name"
+    echo "IPV""$ddns_IPV"" 子域名列表:"
+    echo "[0] 添加一个新的子域名"
     ddns_subdomain_count=$(echo "$ddns_subdomain_list_name" | grep -Eo '[^ ]+' | grep -c "")
     i=0
     while [ "$i" -ne "$ddns_subdomain_count" ]; do
         i=$((i + 1))
         echo "[""$i""]" "$(echo "$ddns_subdomain_list_name" | grep -Eo '[^"]+' | sed -n "$i"p)" "$ddns_IPVType" "$(echo "$ddns_subdomain_list_value" | grep -Eo '[^ ]+' | sed -n "$i"p)"
     done
-    echo "Select your IPV""$ddns_IPV"" subdomain name[0]:"
+    echo "选择您的 IPV""$ddns_IPV"" 子域名 [0]:"
     read ddns_record_domain
     if [ -z "$ddns_record_domain" ]; then
         ddns_record_domain=0
     fi
     if echo "$ddns_record_domain" | grep -vEo "^[0-9]+$"; then
-        echo "Error domain:ddns_record_domain"
+        echo "错误域名:ddns_record_domain"
         exit
     fi
     if [ "$ddns_record_domain" = "0" ]; then
-        echo "Create New: Enter sub domain [ Like ddns ]:"
+        echo "创建新的子域名: 输入子域名 [如 ddns]:"
         read ddns_newsubdomain
         if echo "$ddns_newsubdomain"".""$ddns_main_domain" | grep -Eqv "$DOMAINREX"; then
-            echo "Error domain:ddns_newsubdomain"
+            echo "错误域名:ddns_newsubdomain"
             exit
         fi
         if [ "$ddns_IPV" = "6" ]; then
@@ -550,7 +568,7 @@ menu_subdomain() {
     else
         ddns_record_domain_index=$ddns_record_domain
         ddns_not_add_sub="1"
-        ddns_record_domain="$(echo "$ddns_subdomain_list_name" | grep -Eo '[^"]+' | sed -n "$ddns_record_domain"p)"
+        ddns_record_domain="$(echo "$ddns_subdomain_list_name" | grep -Eo '[^"]+' | sed -n "$ddns_record_domain_index"p)"
     fi
 }
 
@@ -559,10 +577,10 @@ showDEV() {
     if [ -z "$1" ]; then
         IPV="4"
     fi
-    echo "How to get your new IP ?"
-    echo "[1]From IP-Check URL"
-    echo "[2]From Interface"
-    echo "Your choice [1]:"
+    echo "如何获取您的新 IP？"
+    echo "[1] 从 IP 检查 URL 获取"
+    echo "[2] 从网络接口获取"
+    echo "您的选择 [1]:"
     read ddns_IPmode
 
     if [ "$ddns_IPmode" = "2" ]; then
@@ -574,7 +592,7 @@ showDEV() {
             if [ "$?" = 0 ]; then
                 devlist=$(ifconfig | grep -Eo "^""$DEVREX" | grep -Ev "^lo$")
             else
-                echo "List all interface: failed."
+                echo "列出所有接口: 失败。"
                 exit
             fi
         fi
@@ -586,20 +604,20 @@ showDEV() {
             echo "[""$i""]" "$DEV" "$(getDEVIP "$IPV")"
         done
         i=$((i + 1))
-        echo "[""$i""]" "Enter the network interface manually"
-        echo "Please select your interface [1]"
+        echo "[""$i""]" "手动输入网络接口"
+        echo "请选择您的接口 [1]:"
         read selDEV
         if [ -z "$selDEV" ]; then
             selDEV=1
         fi
         if [ "$selDEV" = "$i" ]; then
-            echo "Enter interface [like eth0]:"
+            echo "输入接口 [如 eth0]:"
             read selDEV
             DEV=$selDEV
         else
             DEV=$(echo "$devlist" | grep -Eo "[-_0-9a-zA-Z@.]+" | sed -n "$selDEV"p)
             if [ -z "$DEV" ]; then
-                echo "Error interface."
+                echo "错误接口。"
                 exit
             fi
         fi
@@ -647,7 +665,7 @@ addsub_cloudflare() {
     cloudflare_record_id=$(fetch_cloudflare "$cloudflare_zoneid"/dns_records | grep -Eo '"id":"[0-9a-z]{32}' | grep -Eo "[0-9a-z]{32}")
     postData=""
     if [ -z "$cloudflare_record_id" ]; then
-        echo "Creat new subdomain failed."
+        echo "创建新的子域名失败。"
         exit
     fi
     ddns_record_domain="$ddns_newsubdomain"".""$ddns_main_domain"
@@ -656,7 +674,7 @@ addsub_cloudflare() {
 guide_cloudflare() {
     check_method
     api_help https://dash.cloudflare.com/profile/api-tokens
-    echo "Your cloudflare API TOKEN:"
+    echo "您的 Cloudflare API TOKEN:"
     read cloudflare_API_Token
     # Select main domain
     cloudflare_zone_list=$(fetch_cloudflare | grep -Eo '"id":"[0-9a-z]{32}","name":"'"$DOMAINREX")
@@ -677,13 +695,13 @@ guide_cloudflare() {
         cloudflare_record_id="$(echo "$cloudflare_record_list_id" | grep -Eo '[a-z0-9]{32}' | sed -n "$ddns_record_domain_index"p)"
     fi
     if [ -z "$cloudflare_record_id" ]; then
-        echo "Error domain:cloudflare_record_id"
+        echo "错误域名:cloudflare_record_id"
         exit
     fi
-    echo "Turn on Cloudflare CDN proxied for ""$ddns_record_domain""?"
-    echo "[1]Disable"
-    echo "[2]Enable"
-    echo "Your choice [1]:"
+    echo "为 ""$ddns_record_domain"" 开启 Cloudflare CDN 代理？"
+    echo "[1] 禁用"
+    echo "[2] 启用"
+    echo "您的选择 [1]:"
     read cloudflare_cdn
     if [ "$cloudflare_cdn" = "2" ]; then
         cloudflare_cdn="true"
@@ -757,7 +775,7 @@ addsub_dnspod() {
     dnspod_record_id=$(fetch_dnspod Record.Create | grep -Eo '"record":\{"id":"''[0-9]+' | sed 's/"record":{"id":"//g')
     postData=""
     if [ -z "$dnspod_record_id" ]; then
-        echo "Creat new subdomain failed."
+        echo "创建新的子域名失败。"
         exit
     fi
     if [ "$dnspod_type" = "com" ]; then
@@ -769,10 +787,10 @@ addsub_dnspod() {
 }
 
 guide_dnspod() {
-    echo "Which dnspod do you use?"
+    echo "您使用的是哪一个 DNSPod？"
     echo "[1] www.dnspod.cn"
     echo "[2] www.dnspod.com"
-    echo "Your choice [1]:"
+    echo "您的选择 [1]:"
     read dnspod_type
     if [ "$dnspod_type" = "2" ]; then
         dnspod_type="com"
@@ -786,9 +804,9 @@ guide_dnspod() {
         dnspod_api_url="https://dnsapi.cn"
         api_help https://docs.dnspod.cn/account/dnspod-token/
     fi
-    echo "Your dnspod.""$dnspod_type"" API ID:"
+    echo "您的 dnspod.""$dnspod_type"" API ID:"
     read dnspod_API_ID
-    echo "Your dnspod.""$dnspod_type"" API Token:"
+    echo "您的 dnspod.""$dnspod_type"" API Token:"
     read dnspod_API_Token
     dnspod_login_token="$dnspod_API_ID"",""$dnspod_API_Token"
     # Select main domain
@@ -816,7 +834,7 @@ guide_dnspod() {
         dnspod_record_line="默认"
     fi
     if [ -z "$dnspod_record_id" ]; then
-        echo "Error domain:dnspod_record_id"
+        echo "错误域名:dnspod_record_id"
         exit
     fi
     showDEV "$ddns_IPV"
@@ -869,7 +887,7 @@ addsub_godaddy() {
     postData=""
     postMethod=""
     if echo "$addsub_godaddy_result" | grep -q '"code"'; then
-        echo "Creat new subdomain failed.""$(echo "$addsub_godaddy_result" | grep -Eo '"message":"[^}]+"' | head -1)"
+        echo "创建新的子域名失败。""$(echo "$addsub_godaddy_result" | grep -Eo '"message":"[^}]+"' | head -1)"
         exit
     fi
     ddns_record_domain=$ddns_newsubdomain
@@ -877,10 +895,10 @@ addsub_godaddy() {
 
 guide_godaddy() {
     check_method
-    echo "[help] https://developer.godaddy.com/keys"
-    echo "Production API Key:"
+    echo "[帮助] https://developer.godaddy.com/keys"
+    echo "生产环境 API Key:"
     read godaddy_apikey
-    echo "Production API Secret"
+    echo "生产环境 API Secret:"
     read godaddy_secret
     godaddy_ssokey="$godaddy_apikey"":""$godaddy_secret"
     # Select main domain
@@ -909,7 +927,7 @@ while [ "$i" -ne "$countProvider" ]; do
     i=$((i + 1))
     echo "[""$i""]" "$(echo "$dnsProvider" | grep -Eo "[^,]+" | sed -n "$i"p)"
 done
-echo "Select your DNS provider[1]:"
+echo "选择您的 DNS 提供商[1]:"
 read selProvider
 if echo "$selProvider" | grep -Evqo "^[1-9]{1}$"; then
     selProvider=1
@@ -918,7 +936,7 @@ testguide=$(echo "$dnsProvider" | grep -Eo "[^,]+" | sed -n "$selProvider"p | gr
 echo "$testguide" DDNS:
 echo "[1] IPV4 DDNS"
 echo "[2] IPV6 DDNS"
-echo "IPV4/IPV6 DDNS?[1]:"
+echo "IPV4/IPV6 DDNS？[1]:"
 read ddns_IPV
 if [ "$ddns_IPV" = "2" ]; then
     ddns_IPV=6
