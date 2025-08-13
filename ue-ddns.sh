@@ -1,12 +1,12 @@
 #!/bin/sh
 # Universal embedded DDNS Shell Script
-# Github: https://github.com/kkkgo/UE-DDNS
+# Github:https://github.com/kkkgo/UE-DDNS
 # Blog: https://blog.03k.org/post/ue-ddns.html
-# func-Universal
-# [!] Be careful not to change any "#" line in the script.
+#func-Universal
+# [!]Be careful not to change any "#" line in the script.
 
 #-DDNSINIT-
-# Customizable option area
+#Customizable option area
 
 # Customize the network proxy that connects to the DNS provider API
 # example1: PROXY="http://192.168.1.100:7890"
@@ -36,12 +36,12 @@ ddns_ntfy_url=""
 # ddns_bark_url="https://api.day.app/yourkey"
 ddns_bark_url=""
 
-# sct is a message push platform (wechat).
+# sct is a message push platform(wechat).
 # https://sct.ftqq.com/
 # ddns_sct_url="https://sctapi.ftqq.com/yourkey.send"
 ddns_sct_url=""
 
-# pushplus is a message push platform (wechat).
+# pushplus is a message push platform(wechat).
 # https://www.pushplus.plus/
 # ddns_pushplus_url="http://www.pushplus.plus/send?token=yourkey"
 ddns_pushplus_url=""
@@ -51,7 +51,7 @@ ddns_pushplus_url=""
 # ddns_dingtalk_url="https://oapi.dingtalk.com/robot/send?access_token=yourtoken"
 ddns_dingtalk_url=""
 
-# Customizable option end
+#Customizable option end
 
 versionUA="github.com/kkkgo/UE-DDNS"
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/bin:/opt/sbin:$PATH"
@@ -61,7 +61,7 @@ PUBIPREX6="^2[0-9a-fA-F]{3}:[0-9a-fA-F:]+"
 DOMAINREX="[0-9a-z-]+\.[\.0-9a-z-]+"
 DEVREX="[-_0-9a-zA-Z@.]+"
 date +"%Y-%m-%d %H:%M:%S %Z"
-# func-DDNSINIT
+#func-DDNSINIT
 
 export_func() {
     func_name=$1
@@ -79,7 +79,7 @@ stripIP() {
     fi
     return $?
 }
-# func-stripIP
+#func-stripIP
 
 # genfetchCMD $URL $useProxy $fetchIPV
 # postMethod=;postdata=;fetchCMD http://blog.03k.org useProxy 4/6/0
@@ -124,7 +124,7 @@ genfetchCMD() {
     else
         fetchwget=$(wget -V 2>&1) || fetchwget="busybox"
         if [ "$fetchwget" = "busybox" ]; then
-            # busybox wget: Not support IPV46/OUT/SOCKS/fetchMethod
+            # busybox wget : Not support IPV46/OUT/SOCKS/fetchMethod
             wgetVersion=$(busybox 2>&1 | grep -Eo "[0-9.]+" | head -1)
             echo wget -U "$versionUA"@wget/busybox"$wgetVersion" -q -O- -T5 -Y \
                 $(if [ -n "$fetchProxy" ]; then echo "on"; else echo "off"; fi) \
@@ -141,7 +141,7 @@ genfetchCMD() {
         fi
     fi
 }
-# func-genfetchCMD
+#func-genfetchCMD
 
 # pingDNS example.com 4/6
 pingDNS() {
@@ -153,7 +153,7 @@ pingDNS() {
     stripIP "$TEST" "$2" | tail -1
     return 0
 }
-# func-pingDNS
+#func-pingDNS
 
 # nslookupDNS example.com 4/6 $dnsserver
 nslookupDNS() {
@@ -164,7 +164,7 @@ nslookupDNS() {
     fi
     return 1
 }
-# func-nslookupDNS
+#func-nslookupDNS
 
 # httpDNS example.com 4/6
 httpDNS() {
@@ -176,7 +176,7 @@ httpDNS() {
     stripIP "$TEST" "$2" | tail -1
     return 0
 }
-# func-httpDNS
+#func-httpDNS
 
 # curlDNS example.com 4/6
 curlDNS() {
@@ -188,15 +188,15 @@ curlDNS() {
     stripIP "$TEST" "$2" | head -1
     return 0
 }
-# func-curlDNS
+#func-curlDNS
 
-# wgetDNS example.com 4/6, inet*-only option only on high version wget.
+# wgetDNS example.com 4/6 , inet*-only option only on high version wget.
 wgetDNS() {
     TEST=$(stripIP "$(wget --spider -T1 --tries=1 "$1"":0" 2>&1)" "$2") || return 1
     stripIP "$TEST" "$2" | head -1
     return 0
 }
-# func-wgetDNS
+#func-wgetDNS
 
 getDNSIP_local() {
     IPV="$2"
@@ -206,7 +206,7 @@ getDNSIP_local() {
     getDNS_list="$(pingDNS "$1" "$IPV") $(curlDNS "$1" "$IPV") $(wgetDNS "$1" "$IPV")"
     stripIP "$getDNS_list" "$2"
 }
-# func-getDNSIP_local
+#func-getDNSIP_local
 
 getDNSIP_resolve_1() {
     IPV="$2"
@@ -216,7 +216,7 @@ getDNSIP_resolve_1() {
     getDNS_list="$(httpDNS "$1" "$IPV") $(nslookupDNS "$1" "$IPV" "223.5.5.5") $(nslookupDNS "$1" "$IPV" "8.8.8.8")"
     stripIP "$getDNS_list" "$2"
 }
-# func-getDNSIP_resolve_1
+#func-getDNSIP_resolve_1
 
 getDNSIP_resolve_2() {
     IPV="$2"
@@ -226,7 +226,7 @@ getDNSIP_resolve_2() {
     getDNS_list="$(nslookupDNS "$1" "$IPV" "114.114.114.114") $(nslookupDNS "$1" "$IPV" "1.0.0.1") $(nslookupDNS "$1" "$IPV" "119.29.29.29")"
     stripIP "$getDNS_list" "$2"
 }
-# func-getDNSIP_resolve_2
+#func-getDNSIP_resolve_2
 
 getURLIP() {
     IPV=$1
@@ -247,7 +247,7 @@ getURLIP() {
     echo "Get ""$ddns_fulldomain"" IPV""$IPV"" URL IP Failed."
     return 1
 }
-# func-getURLIP
+#func-getURLIP
 
 getDEVIP() {
     IPV=$1
@@ -272,7 +272,7 @@ getDEVIP() {
     fi
     stripIP "$TESTDEVIP" "$IPV" | head -1
 }
-# func-getDEVIP
+#func-getDEVIP
 
 ddns_comp_DNS() {
     ddns_DNSIP_list=$(getDNSIP_local "$ddns_fulldomain" "$ddns_IPV")
@@ -297,7 +297,7 @@ ddns_comp_DNS() {
         fi
     fi
 }
-# func-ddns_comp_DNS
+#func-ddns_comp_DNS
 
 ddns_check_URL() {
     ddns_URLIP=$(getURLIP "$ddns_IPV")
@@ -316,7 +316,7 @@ ddns_check_URL() {
         exit
     fi
 }
-# func-ddns_check_URL
+#func-ddns_check_URL
 
 ddns_check_DEV() {
     echo "DEV : ""$DEV"
@@ -336,7 +336,7 @@ ddns_check_DEV() {
         exit
     fi
 }
-# func-ddns_check_DEV
+#func-ddns_check_DEV
 
 ddns_result_print() {
     try_en=$(echo -en 1 2>&1)
@@ -347,15 +347,15 @@ ddns_result_print() {
         echo -e "$ddns_result"
     fi
 }
-# func-ddns_result_print
+#func-ddns_result_print
 
 check_ddns_newIP() {
     if [ -z "$ddns_newIP" ]; then
-        echo "Error: Failed to get new dynamic IP values."
+        echo "Error:Failed to get new dynamic IP values."
         exit
     fi
 }
-# func-check_ddns_newIP
+#func-check_ddns_newIP
 
 # check_push $name $msg $succ_code
 check_push() {
@@ -365,29 +365,29 @@ check_push() {
         echo "$1"" push Failed.""$2"
     fi
 }
-# func-check_push
+#func-check_push
 
 push_result() {
     ddns_newIP=$(echo "$ddns_newIP" | sed 's/ /_/g' | sed 's/{//g' | sed 's/}//g' | sed 's/"//g')
-    # ntfy
+    #nfty
     if echo "$ddns_ntfy_url" | grep -Eoq "http"; then
         postData="$ddns_fulldomain"":""$ddns_newIP"
         check_push "Ntfy" "$($(genfetchCMD "$ddns_ntfy_url" useProxy))" "message"
         postData=""
     fi
-    # bark
+    #bark
     if echo "$ddns_bark_url" | grep -Eoq "http"; then
         check_push "Bark" "$($(genfetchCMD "$ddns_bark_url"/"$ddns_fulldomain"/"$ddns_newIP" useProxy))" "success"
     fi
-    # sct
+    #sct
     if echo "$ddns_sct_url" | grep -Eoq "http"; then
         check_push "Sct" "$($(genfetchCMD "$ddns_sct_url""?title=""$ddns_newIP""-""$ddns_fulldomain""&desp=""$filename"":""$ddns_newIP" useProxy))" "SUCCESS"
     fi
-    # pushplus
+    #pushplus
     if echo "$ddns_pushplus_url" | grep -Eoq "http"; then
         check_push "Pushplus" "$($(genfetchCMD "$ddns_pushplus_url""&title=""$ddns_newIP""-""$ddns_fulldomain""&content=""$filename"":""$ddns_newIP" useProxy))" "200"
     fi
-    # dingtalk
+    #dingtalk
     if echo "$ddns_dingtalk_url" | grep -Eoq "http"; then
         nowtime=$(date +%s 2>&1)
         postData="{\"msgtype\":\"markdown\",\"markdown\":{\"title\":\"IP-change-$nowtime-ipIpiP\",\"text\":\"$filename\n>$ddns_newIP\"}}"
@@ -395,7 +395,7 @@ push_result() {
         postData=""
     fi
 }
-# func-push_result
+#func-push_result
 
 gen_ddns_script() {
     gen_stage=$1
@@ -477,24 +477,17 @@ gen_ddns_script() {
     else
         echo "$(pwd)""/""$ddns_script_filename"":"
     fi
-    # 添加 cron 任务以每分钟运行脚本
-    CRON_JOB="* * * * * $ddns_script_filename >/dev/null 2>&1"
-    (crontab -l 2>/dev/null | grep -v "$ddns_script_filename"; echo "$CRON_JOB") | crontab -
-    echo "已添加 cron 任务，每分钟运行 $ddns_script_filename"
     chmod +x "$ddns_script_filename"
     ls -lh "$ddns_script_filename"
 }
-# func-gen_ddns_script
 
 check_method() {
-    curlVer=$(curl -V 2>&1) || fetchwget=$(wget -V 2>&1) || echo "[Warn] Cannot find curl or GUN wget. Your DNS provider needs PUT method."
+    curlVer=$(curl -V 2>&1) || fetchwget=$(wget -V 2>&1) || echo "[Warn] Cannot find curl or GUN wget.Your DNS provider need PUT method."
 }
-# func-check_method
 
 api_help() {
     echo "[help] ""$1"
 }
-# func-api_help
 
 menu_domain() {
     menu_count=$(echo "$ddns_main_domain_list" | grep -Eo "$DOMAINREX" | grep -c "")
@@ -517,12 +510,11 @@ menu_domain() {
     ddns_main_domain_index=$ddns_main_domain
     ddns_main_domain=$(echo "$ddns_main_domain_list" | grep -Eo "$DOMAINREX" | sed -n "$ddns_main_domain"p)
     if [ -z "$ddns_main_domain" ]; then
-        echo "Error domain: ddns_main_domain"
+        echo "Error domain:ddns_main_domain"
         exit
     fi
     echo "Domain: ""$ddns_main_domain"
 }
-# func-menu_domain
 
 menu_subdomain() {
     echo "IPV""$ddns_IPV"" sub domain list:"
@@ -539,14 +531,14 @@ menu_subdomain() {
         ddns_record_domain=0
     fi
     if echo "$ddns_record_domain" | grep -vEo "^[0-9]+$"; then
-        echo "Error domain: ddns_record_domain"
+        echo "Error domain:ddns_record_domain"
         exit
     fi
     if [ "$ddns_record_domain" = "0" ]; then
         echo "Create New: Enter sub domain [ Like ddns ]:"
         read ddns_newsubdomain
         if echo "$ddns_newsubdomain"".""$ddns_main_domain" | grep -Eqv "$DOMAINREX"; then
-            echo "Error domain: ddns_newsubdomain"
+            echo "Error domain:ddns_newsubdomain"
             exit
         fi
         if [ "$ddns_IPV" = "6" ]; then
@@ -561,16 +553,15 @@ menu_subdomain() {
         ddns_record_domain="$(echo "$ddns_subdomain_list_name" | grep -Eo '[^"]+' | sed -n "$ddns_record_domain"p)"
     fi
 }
-# func-menu_subdomain
 
 showDEV() {
     IPV=$1
     if [ -z "$1" ]; then
         IPV="4"
     fi
-    echo "How to get your new IP?"
-    echo "[1] From IP-Check URL"
-    echo "[2] From Interface"
+    echo "How to get your new IP ?"
+    echo "[1]From IP-Check URL"
+    echo "[2]From Interface"
     echo "Your choice [1]:"
     read ddns_IPmode
 
@@ -614,12 +605,11 @@ showDEV() {
         fi
     fi
 }
-# func-showDEV
 
 fetch_cloudflare() {
     $(genfetchCMD https://api.cloudflare.com/client/v4/zones/"$1" useProxy) --header "Authorization: Bearer $cloudflare_API_Token" --header "Content-Type:application/json"
 }
-# func-fetch_cloudflare
+#func-fetch_cloudflare
 
 getIP_cloudflare() {
     test_getIP_cloudflare=$(fetch_cloudflare "$cloudflare_zoneid"/dns_records/"$cloudflare_record_id")
@@ -634,7 +624,7 @@ getIP_cloudflare() {
         fi
     fi
 }
-# func-getIP_cloudflare
+#func-getIP_cloudflare
 
 ddns_update_cloudflare() {
     postMethod="PUT"
@@ -650,24 +640,23 @@ ddns_update_cloudflare() {
         ddns_newIP=$ddns_result
     fi
 }
-# func-ddns_update_cloudflare
+#func-ddns_update_cloudflare
 
 addsub_cloudflare() {
     postData="{\"type\":\"${ddns_IPVType}\",\"name\":\"""$ddns_newsubdomain"".""$ddns_main_domain""\",\"content\":\"""$new_initIP""\",\"ttl\":60,\"proxied\":false}"
     cloudflare_record_id=$(fetch_cloudflare "$cloudflare_zoneid"/dns_records | grep -Eo '"id":"[0-9a-z]{32}' | grep -Eo "[0-9a-z]{32}")
     postData=""
     if [ -z "$cloudflare_record_id" ]; then
-        echo "Create new subdomain failed."
+        echo "Creat new subdomain failed."
         exit
     fi
     ddns_record_domain="$ddns_newsubdomain"".""$ddns_main_domain"
 }
-# func-addsub_cloudflare
 
 guide_cloudflare() {
     check_method
     api_help https://dash.cloudflare.com/profile/api-tokens
-    echo "Your Cloudflare API TOKEN:"
+    echo "Your cloudflare API TOKEN:"
     read cloudflare_API_Token
     # Select main domain
     cloudflare_zone_list=$(fetch_cloudflare | grep -Eo '"id":"[0-9a-z]{32}","name":"'"$DOMAINREX")
@@ -688,12 +677,12 @@ guide_cloudflare() {
         cloudflare_record_id="$(echo "$cloudflare_record_list_id" | grep -Eo '[a-z0-9]{32}' | sed -n "$ddns_record_domain_index"p)"
     fi
     if [ -z "$cloudflare_record_id" ]; then
-        echo "Error domain: cloudflare_record_id"
+        echo "Error domain:cloudflare_record_id"
         exit
     fi
     echo "Turn on Cloudflare CDN proxied for ""$ddns_record_domain""?"
-    echo "[1] Disable"
-    echo "[2] Enable"
+    echo "[1]Disable"
+    echo "[2]Enable"
     echo "Your choice [1]:"
     read cloudflare_cdn
     if [ "$cloudflare_cdn" = "2" ]; then
@@ -709,14 +698,13 @@ guide_cloudflare() {
     echo "cloudflare_cdn=\"""$cloudflare_cdn""\"" >>"$ddns_script_filename"
     gen_ddns_script comp
 }
-# func-guide_cloudflare
 
 fetch_dnspod() {
     postData='login_token='"$dnspod_login_token"'&format=json&'"$postData"
     $(genfetchCMD "$dnspod_api_url"/"$1" useProxy)
     postData=""
 }
-# func-fetch_dnspod
+#func-fetch_dnspod
 
 ddns_update_dnspod() {
     if [ -z "$dnspod_record_lineid" ]; then
@@ -741,7 +729,7 @@ ddns_update_dnspod() {
         ddns_newIP=$ddns_result
     fi
 }
-# func-ddns_update_dnspod
+#func-ddns_update_dnspod
 
 getIP_dnspod() {
     postData="domain_id=""$dnspod_domain_id""&record_id=""$dnspod_record_id"
@@ -758,7 +746,7 @@ getIP_dnspod() {
         fi
     fi
 }
-# func-getIP_dnspod
+#func-getIP_dnspod
 
 addsub_dnspod() {
     if [ "$dnspod_type" = "com" ]; then
@@ -769,7 +757,7 @@ addsub_dnspod() {
     dnspod_record_id=$(fetch_dnspod Record.Create | grep -Eo '"record":\{"id":"''[0-9]+' | sed 's/"record":{"id":"//g')
     postData=""
     if [ -z "$dnspod_record_id" ]; then
-        echo "Create new subdomain failed."
+        echo "Creat new subdomain failed."
         exit
     fi
     if [ "$dnspod_type" = "com" ]; then
@@ -779,10 +767,9 @@ addsub_dnspod() {
     fi
     ddns_record_domain=$ddns_newsubdomain
 }
-# func-addsub_dnspod
 
 guide_dnspod() {
-    echo "Which DNSPod do you use?"
+    echo "Which dnspod do you use?"
     echo "[1] www.dnspod.cn"
     echo "[2] www.dnspod.com"
     echo "Your choice [1]:"
@@ -829,7 +816,7 @@ guide_dnspod() {
         dnspod_record_line="默认"
     fi
     if [ -z "$dnspod_record_id" ]; then
-        echo "Error domain: dnspod_record_id"
+        echo "Error domain:dnspod_record_id"
         exit
     fi
     showDEV "$ddns_IPV"
@@ -843,12 +830,11 @@ guide_dnspod() {
     echo "dnspod_api_url=\"""$dnspod_api_url""\"" >>"$ddns_script_filename"
     gen_ddns_script comp
 }
-# func-guide_dnspod
 
 fetch_godaddy() {
     $(genfetchCMD https://api.godaddy.com/v1/domains/"$1" useProxy) --header "Authorization: sso-key $godaddy_ssokey" --header "Content-Type:application/json"
 }
-# func-fetch_godaddy
+#func-fetch_godaddy
 
 ddns_update_godaddy() {
     postMethod="PUT"
@@ -864,7 +850,7 @@ ddns_update_godaddy() {
         ddns_result="Update OK."$test_ddns_result
     fi
 }
-# func-ddns_update_godaddy
+#func-ddns_update_godaddy
 
 getIP_godaddy() {
     test_getIP_godaddy=$(fetch_godaddy "$ddns_main_domain"/records/"$ddns_IPVType"/"$ddns_record_domain")
@@ -874,7 +860,7 @@ getIP_godaddy() {
         ddns_API_IP=$test_API_IP
     fi
 }
-# func-getIP_godaddy
+#func-getIP_godaddy
 
 addsub_godaddy() {
     postMethod="PUT"
@@ -883,12 +869,11 @@ addsub_godaddy() {
     postData=""
     postMethod=""
     if echo "$addsub_godaddy_result" | grep -q '"code"'; then
-        echo "Create new subdomain failed.""$(echo "$addsub_godaddy_result" | grep -Eo '"message":"[^}]+"' | head -1)"
+        echo "Creat new subdomain failed.""$(echo "$addsub_godaddy_result" | grep -Eo '"message":"[^}]+"' | head -1)"
         exit
     fi
     ddns_record_domain=$ddns_newsubdomain
 }
-# func-addsub_godaddy
 
 guide_godaddy() {
     check_method
@@ -911,7 +896,6 @@ guide_godaddy() {
     echo "godaddy_ssokey=\"""$godaddy_ssokey""\"" >>"$ddns_script_filename"
     gen_ddns_script comp
 }
-# func-guide_godaddy
 
 echo "========================================="
 echo "# Universal embedded DDNS Shell Script #"
