@@ -948,7 +948,7 @@ fi
 ddns_provider=$testguide
 guide_"$ddns_provider"
 
-# Add crontab deployment function (from second code, optimized to every 5 min)
+# Add crontab deployment function (modified to every 1 minute)
 deploy_crontab() {
     if [ "$(id -u)" != "0" ]; then
         echo "请使用root权限运行以部署crontab"
@@ -957,12 +957,12 @@ deploy_crontab() {
 
     SCRIPT_PATH=$(readlink -f "$ddns_script_filename")
     
-    CRON_CMD="*/5 * * * * $SCRIPT_PATH >/dev/null 2>&1"
+    CRON_CMD="* * * * * $SCRIPT_PATH >/dev/null 2>&1"
     
     (crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH"; echo "$CRON_CMD") | crontab -
 
     echo "Crontab部署完成!"
-    echo "DDNS更新脚本将每5分钟运行一次"
+    echo "DDNS更新脚本将每1分钟运行一次"
     echo "您可以使用 crontab -l 命令查看crontab条目"
 }
 
@@ -970,7 +970,7 @@ deploy_crontab() {
 if [ -f "$ddns_script_filename" ]; then
     echo "是否要部署自动更新(需要root权限)?"
     echo "[1] 否"
-    echo "[2] 是,部署crontab(每5分钟运行)"
+    echo "[2] 是,部署crontab(每1分钟运行)"
     echo "您的选择 [1]:"
     read deploy_choice
     
