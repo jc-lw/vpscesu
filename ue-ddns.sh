@@ -900,7 +900,7 @@ guide_godaddy() {
 echo "========================================="
 echo "# Universal embedded DDNS Shell Script #"
 echo "# https://$versionUA"
-echo "# https://github.com/jc-lw/vpscesu"
+echo "# https://blog.03k.org/post/ue-ddns.html"
 echo "========================================="
 dnsProvider="cloudflare,dnspod,godaddy"
 countProvider=$(echo "$dnsProvider" | grep -Eo "[^,]+" | grep -c "")
@@ -929,37 +929,3 @@ else
 fi
 ddns_provider=$testguide
 guide_"$ddns_provider"
-# Add crontab deployment function
-deploy_crontab() {
-    # Check if running as root
-    if [ "$(id -u)" != "0" ]; then
-        echo "请使用root权限运行以部署crontab"
-        exit 1
-    fi
-
-    # Get script absolute path
-    SCRIPT_PATH=$(readlink -f "$ddns_script_filename")
-    
-    # Create crontab entry
-    CRON_CMD="* * * * * $SCRIPT_PATH >/dev/null 2>&1"
-    
-    # Add to root's crontab if not already exists
-    (crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH"; echo "$CRON_CMD") | crontab -
-
-    echo "Crontab部署完成!"
-    echo "DDNS更新脚本将每分钟运行一次"
-    echo "您可以使用 crontab -l 命令查看crontab条目"
-}
-
-# Add deployment option after script generation
-if [ -f "$ddns_script_filename" ]; then
-    echo "是否要部署自动更新(需要root权限)?"
-    echo "[1] 否"
-    echo "[2] 是,部署crontab(每分钟运行)"
-    echo "您的选择 [1]:"
-    read deploy_choice
-    
-    if [ "$deploy_choice" = "2" ]; then
-        deploy_crontab
-    fi
-fi
