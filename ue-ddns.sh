@@ -697,6 +697,9 @@ guide_cloudflare() {
     echo "cloudflare_record_id=\"""$cloudflare_record_id""\"" >>"$ddns_script_filename"
     echo "cloudflare_cdn=\"""$cloudflare_cdn""\"" >>"$ddns_script_filename"
     gen_ddns_script comp
+    if [ "$ddns_IPmode" = "1" ]; then
+        add_cron_job
+    fi
 }
 
 fetch_dnspod() {
@@ -829,6 +832,9 @@ guide_dnspod() {
     echo "dnspod_type=\"""$dnspod_type""\"" >>"$ddns_script_filename"
     echo "dnspod_api_url=\"""$dnspod_api_url""\"" >>"$ddns_script_filename"
     gen_ddns_script comp
+    if [ "$ddns_IPmode" = "1" ]; then
+        add_cron_job
+    fi
 }
 
 fetch_godaddy() {
@@ -895,6 +901,20 @@ guide_godaddy() {
     gen_ddns_script init "$ddns_record_domain"".""$ddns_main_domain"
     echo "godaddy_ssokey=\"""$godaddy_ssokey""\"" >>"$ddns_script_filename"
     gen_ddns_script comp
+    if [ "$ddns_IPmode" = "1" ]; then
+        add_cron_job
+    fi
+}
+
+add_cron_job() {
+    echo "Adding cron job to run $ddns_script_filename every minute..."
+    full_path=$(realpath "$ddns_script_filename" 2>/dev/null || echo "$(pwd)/$ddns_script_filename")
+    (crontab -l 2>/dev/null; echo "* * * * * /bin/sh $full_path") | crontab -
+    if [ $? -eq 0 ]; then
+        echo "Cron job added successfully."
+    else
+        echo "Failed to add cron job. Please add manually: * * * * * /bin/sh $full_path"
+    fi
 }
 
 echo "========================================="
