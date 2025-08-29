@@ -419,6 +419,11 @@ gen_ddns_script() {
         else
             echo "ddns_check_URL" >>"$ddns_script_filename"
         fi
+        # Verify generated script
+        if ! grep -q "ddns_check_URL" "$ddns_script_filename"; then
+            echo "Error: ddns_check_URL function missing in generated script!"
+            exit 1
+        fi
     fi
     echo "DDNS script generation completed!"
     if [ "$hotplug" = "2" ]; then
@@ -428,11 +433,6 @@ gen_ddns_script() {
     fi
     chmod +x "$ddns_script_filename"
     ls -lh "$ddns_script_filename"
-    # Verify generated script
-    if ! grep -q "ddns_check_URL" "$ddns_script_filename"; then
-        echo "Error: ddns_check_URL function missing in generated script!"
-        exit 1
-    fi
 }
 #func-gen_ddns_script
 
@@ -923,7 +923,7 @@ deploy_crontab() {
         exit 1
     fi
     SCRIPT_PATH=$(readlink -f "$ddns_script_filename")
-    CRON_CMD="* * * * * $SCRIPT_PATH"
+    CRON_CMD="* * * * * $SCRIPT_PATH >> /root/ddns.log 2>&1"
     (crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH"; echo "$CRON_CMD") | crontab -
     echo "Crontab deployed successfully!"
     echo "DDNS update script will run every 1 minute"
