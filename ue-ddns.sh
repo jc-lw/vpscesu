@@ -34,6 +34,7 @@ export_func() {
     func_end=$(grep -n "func-""$func_name" "$0" | head -1 | grep -Eo "^[0-9]+")
     sed -n "$func_start","$func_end"p "$0"
 }
+#func-export_func
 
 stripIP() {
     if [ "$2" = "6" ]; then
@@ -199,7 +200,7 @@ getURLIP() {
         stripIP "$TESTURLIP" "$IPV" | tail -1
         return 0
     done
-    echo "Get ""$ddns_fulldomain"" IPV""$IPV"" URL IP Failed."
+    echo "Get IPV""$IPV"" URL IP Failed."
     return 1
 }
 #func-getURLIP
@@ -509,9 +510,23 @@ menu_subdomain() {
             fi
         done
         if [ "$ddns_IPV" = "6" ]; then
-            new_initIP=$(getURLIP "$ddns_IPV") || new_initIP="2a09::"
+            new_initIP=$(getURLIP "$ddns_IPV") || {
+                echo "Failed to get IPv6 address. Please enter a valid IPv6 address for the new subdomain:"
+                read new_initIP
+                if ! echo "$new_initIP" | grep -Eq "$IPREX6"; then
+                    echo "Error: Invalid IPv6 address. Using default: 2a09::"
+                    new_initIP="2a09::"
+                fi
+            }
         else
-            new_initIP=$(getURLIP "$ddns_IPV") || new_initIP="1.1.1.1"
+            new_initIP=$(getURLIP "$ddns_IPV") || {
+                echo "Failed to get IPv4 address. Please enter a valid IPv4 address for the new subdomain:"
+                read new_initIP
+                if ! echo "$new_initIP" | grep -Eq "$IPREX4"; then
+                    echo "Error: Invalid IPv4 address. Using default: 1.1.1.1"
+                    new_initIP="1.1.1.1"
+                fi
+            }
         fi
         addsub_"$ddns_provider"
     else
@@ -611,15 +626,19 @@ ddns_update_cloudflare() {
 #func-ddns_update_cloudflare
 
 addsub_cloudflare() {
+    # Initialize cloudflare_cdn if not set
+    if [ -z "$cloudflare_cdn" ]; then
+        cloudflare_cdn="false"
+    fi
     postMethod="POST"
-    postData="{\"type\":\"${ddns_IPVType}\",\"name\":\"""$ddns_newsubdomain"".""$ddns_main_domain""\",\"content\":\"""$new_initIP""\",\"ttl\":60,\"proxied\":""$cloudflare_cdn""}"
+    postData="{\"type\":\"${ddns_IPVType}\",\"name\":\"${ddns_newsubdomain}.${ddns_main_domain}\",\"content\":\"${new_initIP}\",\"ttl\":60,\"proxied\":${cloudflare_cdn}}"
     create_response=$(fetch_cloudflare "$cloudflare_zoneid"/dns_records)
     postData=""
     postMethod=""
     if echo "$create_response" | grep -q 'success":true'; then
         cloudflare_record_id=$(echo "$create_response" | grep -Eo '"id":"[0-9a-z]{32}' | grep -Eo "[0-9a-z]{32}" | head -1)
         if [ -n "$cloudflare_record_id" ]; then
-            ddns_record_domain="$ddns_newsubdomain"".""$ddns_main_domain"
+            ddns_record_domain="${ddns_newsubdomain}.${ddns_main_domain}"
             echo "Subdomain '$ddns_record_domain' created successfully with ID: $cloudflare_record_id"
         else
             echo "Error: Failed to extract record ID from Cloudflare response."
@@ -628,7 +647,7 @@ addsub_cloudflare() {
         fi
     else
         error_msg=$(echo "$create_response" | grep -Eo '"errors":\[[^]]+\]' | grep -Eo '\{[^}]+\}')
-        echo "Error: Failed to create subdomain '$ddns_newsubdomain.$ddns_main_domain'."
+        echo "Error: Failed to create subdomain '${ddns_newsubdomain}.${ddns_main_domain}'."
         echo "Cloudflare API error: $error_msg"
         exit 1
     fi
