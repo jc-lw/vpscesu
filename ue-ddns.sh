@@ -354,7 +354,7 @@ gen_ddns_script() {
         if echo "$ddns_fulldomain" | grep -q "@"; then
             ddns_fulldomain=$(echo "$ddns_fulldomain" | sed 's/@.//g')
         fi
-        ddns_script_filename="$ddns_fulldomain"@"$ddns_provider""_IPV""$ddns_IPV"
+        ddns_script_filename="$ddns_fulldomain@cloudflare_IPV$ddns_IPV"
         if [ "$ddns_IPmode" = "2" ]; then
             ddns_script_filename="$ddns_script_filename""_""$DEV"".sh"
             testhotplug=$(ls /etc/hotplug.d/iface 2>&1)
@@ -398,26 +398,27 @@ gen_ddns_script() {
         export_func ddns_comp_DNS >>"$ddns_script_filename"
         export_func genfetchCMD >>"$ddns_script_filename"
         export_func httpDNS >>"$ddns_script_filename"
-        export_func "fetch_""$ddns_provider" >>"$ddns_script_filename"
-        export_func "getIP_""$ddns_provider" >>"$ddns_script_filename"
-        if [ "$ddns_IPmode" = "2" ]; then
-            export_func getDEVIP >>"$ddns_script_filename"
-            export_func ddns_check_DEV >>"$ddns_script_filename"
-            echo "ddns_check_DEV" >>"$ddns_script_filename"
-        else
-            export_func getURLIP >>"$ddns_script_filename"
-            echo "ddns_check_URL" >>"$ddns_script_filename"
-        fi
-        export_func "ddns_update_""$ddns_provider" >>"$ddns_script_filename"
+        export_func getURLIP >>"$ddns_script_filename"
+        export_func ddns_check_URL >>"$ddns_script_filename"
+        export_func getDEVIP >>"$ddns_script_filename"
+        export_func ddns_check_DEV >>"$ddns_script_filename"
+        export_func fetch_"$ddns_provider" >>"$ddns_script_filename"
+        export_func getIP_"$ddns_provider" >>"$ddns_script_filename"
+        export_func ddns_update_"$ddns_provider" >>"$ddns_script_filename"
         export_func check_ddns_newIP >>"$ddns_script_filename"
+        export_func ddns_result_print >>"$ddns_script_filename"
+        export_func check_push >>"$ddns_script_filename"
+        export_func push_result >>"$ddns_script_filename"
         echo "check_ddns_newIP" >>"$ddns_script_filename"
         echo "echo Trying to update: \"\$ddns_fulldomain\"\" -> \"\"\$ddns_newIP\"" >>"$ddns_script_filename"
         echo "ddns_update_""$ddns_provider" >>"$ddns_script_filename"
-        export_func "ddns_result_print" >>"$ddns_script_filename"
         echo "ddns_result_print" >>"$ddns_script_filename"
-        export_func "check_push" >>"$ddns_script_filename"
-        export_func "push_result" >>"$ddns_script_filename"
         echo "push_result" >>"$ddns_script_filename"
+        if [ "$ddns_IPmode" = "2" ]; then
+            echo "ddns_check_DEV" >>"$ddns_script_filename"
+        else
+            echo "ddns_check_URL" >>"$ddns_script_filename"
+        fi
     fi
     echo "DDNS script generation completed!"
     if [ "$hotplug" = "2" ]; then
@@ -427,6 +428,11 @@ gen_ddns_script() {
     fi
     chmod +x "$ddns_script_filename"
     ls -lh "$ddns_script_filename"
+    # Verify generated script
+    if ! grep -q "ddns_check_URL" "$ddns_script_filename"; then
+        echo "Error: ddns_check_URL function missing in generated script!"
+        exit 1
+    fi
 }
 #func-gen_ddns_script
 
@@ -498,7 +504,6 @@ menu_subdomain() {
             echo "Create New: Enter sub domain [ Like ddns ]:"
             read ddns_newsubdomain
             if echo "$ddns_newsubdomain"".""$ddns_main_domain" | grep -Eq "$DOMAINREX"; then
-                # Check if subdomain already exists
                 if echo "$ddns_subdomain_list_name" | grep -Fx "$ddns_newsubdomain"".""$ddns_main_domain" > /dev/null; then
                     echo "Error: Subdomain '$ddns_newsubdomain.$ddns_main_domain' already exists."
                     echo "Please choose an existing subdomain or enter a different name."
@@ -532,7 +537,7 @@ menu_subdomain() {
     else
         ddns_record_domain_index=$ddns_record_domain
         ddns_not_add_sub="1"
-        ddns_record_domain="$(echo "$ddns_subdomain_list_name" | grep -Eo '[^ ]+' | sed -n "$ddns_record_domain"p)"
+        ddns_record_domain="$(echo "$ddns_subdomain_list_name" | grep -Eo '[^ ]+' | sed -n "$ddns_record_domain_index"p)"
     fi
 }
 #func-menu_subdomain
@@ -626,7 +631,6 @@ ddns_update_cloudflare() {
 #func-ddns_update_cloudflare
 
 addsub_cloudflare() {
-    # Initialize cloudflare_cdn if not set
     if [ -z "$cloudflare_cdn" ]; then
         cloudflare_cdn="false"
     fi
@@ -707,7 +711,7 @@ guide_cloudflare() {
         echo "Proxied mode already matches your choice ($cloudflare_cdn)."
     fi
     showDEV "$ddns_IPV"
-    gen_ddns_script init "$ddns_record_domain"".""$ddns_main_domain"
+    gen_ddns_script init "$ddns_record_domain"
     echo "cloudflare_API_Token=\"""$cloudflare_API_Token""\"" >>"$ddns_script_filename"
     echo "cloudflare_zoneid=\"""$cloudflare_zoneid""\"" >>"$ddns_script_filename"
     echo "cloudflare_record_id=\"""$cloudflare_record_id""\"" >>"$ddns_script_filename"
@@ -919,7 +923,7 @@ deploy_crontab() {
         exit 1
     fi
     SCRIPT_PATH=$(readlink -f "$ddns_script_filename")
-    CRON_CMD="* * * * * $SCRIPT_PATH >/dev/null 2>&1"
+    CRON_CMD="* * * * * $SCRIPT_PATH"
     (crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH"; echo "$CRON_CMD") | crontab -
     echo "Crontab deployed successfully!"
     echo "DDNS update script will run every 1 minute"
